@@ -8,12 +8,14 @@
 
 namespace OCA\Mail_FullTextSearch\Services;
 
+use OC\FullTextSearch\Model\SearchRequestSimpleQuery;
 use OCA\Mail\Contracts\IMailManager;
 use OCA\Mail\IMAP\IMAPClientFactory;
 use OCA\Mail\Service\AccountService;
 use OCA\Mail_FullTextSearch\Utils\Strings;
 use OCP\Files\IMimeTypeDetector;
 use OCP\FullTextSearch\Model\ISearchRequest;
+use OCP\FullTextSearch\Model\ISearchRequestSimpleQuery;
 use OCP\FullTextSearch\Model\ISearchResult;
 use OCP\IURLGenerator;
 
@@ -37,8 +39,6 @@ class SearchService extends BaseService {
 	}
 
 	public function improveSearchRequest(ISearchRequest $request): void {
-		$regexp = [];
-		$hardmeta = [];
 		$query = $request->getSearch();
 		$remain = [];
 
@@ -63,29 +63,26 @@ class SearchService extends BaseService {
 				case 'to':
 				case 'cc':
 				case 'bcc':
-					$regexp[] = ['metatags' => $operator . ':.*' . $value . '.*'];
+					$subquery = new SearchRequestSimpleQuery('metatags', ISearchRequestSimpleQuery::COMPARE_TYPE_REGEX);
+					$subquery->addValue($operator . ':.*' . $value . '.*');
+					$request->addSimpleQuery($subquery);
 					break;
 
 				case 'has':
 					if (str_starts_with($value, 'attachment')) {
-						$hardmeta[] = 'has:attachments';
+						$subquery = new SearchRequestSimpleQuery('metatags', ISearchRequestSimpleQuery::COMPARE_TYPE_KEYWORD);
+						$subquery->addValue('has:attachments');
+						$request->addSimpleQuery($subquery);
+						break;
 					}
 
-					break;
+					/*
+						Intentional missing break
+					*/
 
 				default:
 					$remain[] = $token;
 					break;
-			}
-		}
-
-		if (!empty($regexp)) {
-			$request->addRegexFilters($regexp);
-		}
-
-		if (!empty($hardmeta)) {
-			foreach($hardmeta as $hm) {
-				$request->addMetaTag($hm);
 			}
 		}
 
