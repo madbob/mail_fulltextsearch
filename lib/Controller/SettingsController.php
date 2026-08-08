@@ -1,0 +1,50 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * SPDX-FileCopyrightText: 2018 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-FileCopyrightText: 2026 Roberto Guido
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+namespace OCA\Mail_FullTextSearch\Controller;
+
+use Exception;
+use OCA\Mail_FullTextSearch\AppInfo\Application;
+use OCA\Mail_FullTextSearch\Service\ConfigService;
+use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\DataResponse;
+use OCP\IRequest;
+
+class SettingsController extends Controller {
+	public function __construct(
+		IRequest $request,
+		private readonly ConfigService $configService,
+	) {
+		parent::__construct(Application::APP_ID, $request);
+	}
+
+	/**
+	 * @return DataResponse<Http::STATUS_OK, array<string, int|bool>, array{}>
+	 * @throws Exception
+	 */
+	public function getSettingsAdmin(): DataResponse {
+		$data = $this->configService->getConfig();
+
+		return new DataResponse($data);
+	}
+
+	/**
+	 * @throws Exception
+	 * @return DataResponse<Http::STATUS_OK, array, array{}>
+	 */
+	public function setSettingsAdmin(array $data): DataResponse {
+		if ($this->configService->checkConfig($data)) {
+			$this->configService->setConfig($data);
+		}
+
+		return $this->getSettingsAdmin();
+	}
+}
