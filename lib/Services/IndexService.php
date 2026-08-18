@@ -17,6 +17,7 @@ use OCA\Mail\Service\Attachment\AttachmentService;
 use OCA\Mail_FullTextSearch\Model\Attachment;
 use OCA\Mail_FullTextSearch\Model\Message;
 use OCA\Mail_FullTextSearch\Utils\Strings;
+use OCP\IConfig;
 use OCP\IURLGenerator;
 use Psr\Log\LoggerInterface;
 
@@ -27,6 +28,7 @@ class IndexService extends BaseService {
 	 * the Mail's database
 	 */
 	public function __construct(
+		private IConfig $config,
 		protected IMAPClientFactory $clientFactory,
 		protected AccountService $accountService,
 		protected IMailManager $mailManager,
@@ -49,9 +51,13 @@ class IndexService extends BaseService {
 	public function listMailboxes(string $userId): array {
 		$ret = [];
 
+		$mailVersion = (float) $this->config->getAppValue('mail', 'installed_version');
+
 		$accounts = $this->accountService->findByUserId($userId);
 		foreach ($accounts as $account) {
-			if ($account->getMailAccount()->getProtocol() !== 'imap') {
+			// The "protocol" attribute has been introduced in Mail 5.12, to
+			// sort IMAP and JMAP accounts
+			if ($mailVersion >= 5.12 && $account->getMailAccount()->getProtocol() !== 'imap') {
 				continue;
 			}
 
@@ -65,6 +71,7 @@ class IndexService extends BaseService {
 			}
 		}
 
+		$this->logger->debug('Found ' . count($ret) . ' mailboxes to index');
 		return $ret;
 	}
 
@@ -118,6 +125,7 @@ class IndexService extends BaseService {
 			$this->logger->warning('Unable to retrieve messages for mailbox ' . $mailboxId, ['exception' => $e]);
 		}
 
+		$this->logger->debug('Found ' . count($list) . ' messages in mailboxes ' . $mailboxId . ' to index');
 		return $list;
 	}
 
