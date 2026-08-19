@@ -50,7 +50,12 @@ class HandleMessageDeleted extends ListenersCore implements IEventListener {
 
 			foreach($mailboxes as $mailbox) {
 				if ($mailbox->getName() == $targetMailbox) {
-					$messageId = $this->mailManager->getMessageIdForUid($mailbox, $event->getUid());
+					/*
+						Reminder: in $event->getMessageId() you find, actually,
+						the UID of the message.
+						The function is named in ambiguous way...
+					*/
+					$messageId = $this->mailManager->getMessageIdForUid($mailbox, $event->getMessageId());
 					if ($messageId) {
 						$this->fullTextSearchManager->updateIndexStatus('mail', $messageId, IIndex::INDEX_REMOVE, true);
 						$found = true;
