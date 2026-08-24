@@ -57,7 +57,7 @@ class BaseService {
 
 		/*
 			Keeping the maildir ID is useful both for fine-grained search than
-			to build to link to reach the message in the Mail app
+			to build a link to reach the message in the Mail app
 		*/
 		$document->addMetaTag('maildir:' . $message->getMailboxId());
 

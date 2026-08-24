@@ -44,11 +44,14 @@ class IndexService extends BaseService {
 	}
 
 	/**
-	 * The strategy is to chunk indexing by mailbox (where mailbox = each folder
-	 * into a mail account). Here I collect all accounts for the required user,
-	 * and for each I prepare a separate chunk
+	 * All mailboxes are chunked in blocks of 1000 items (or less).
+	 * Each chunk may then become larger, as attachments found in the messages
+	 * are handled as individual documents.
+	 * Reminder: do not generate a chunk for each single mailbox without
+	 * slicing, if one contains too many messages the whole indexing process may
+	 * allocate too much memory once
 	 */
-	public function listMailboxes(string $userId): array {
+	public function generateChunks(string $userId): array {
 		$ret = [];
 
 		$mailVersion = (float) $this->config->getAppValue('mail', 'installed_version');
@@ -64,7 +67,16 @@ class IndexService extends BaseService {
 			try {
 				$mailboxes = $this->mailManager->getMailboxes($account, true);
 				foreach ($mailboxes as $mailbox) {
-					$ret[] = (string)$mailbox->getId();
+					$ids = $this->messageMapper->findAllIds($mailbox);
+					while(true) {
+						$subIds = array_splice($ids, 0, 1000);
+						if (empty($subIds)) {
+							break;
+						}
+
+						$chunk = sprintf('%s-%s-%s', $mailbox->getId(), $subIds[0], $subIds[count($subIds) - 1]);
+						$ret[] = $chunk;
+					}
 				}
 			} catch (\Exception $e) {
 				$this->logger->warning('Unable to list mailboxes to index in account ' . $account->getId(), ['exception' => $e]);
@@ -75,16 +87,43 @@ class IndexService extends BaseService {
 		return $ret;
 	}
 
-	public function getEasyMessages(string $userId, int $mailboxId) {
+	public function generateIndexableDocuments(string $userId, string $chunk) {
 		$list = [];
 
 		try {
+			[$mailboxId, $start, $end] = explode('-', $chunk);
+			$start = intval($start);
+			$end = intval($end);
+
 			$mailbox = $this->getMailbox($userId, $mailboxId);
 			$account = $this->getAccount($userId, $mailbox->getAccountId());
 			$client = $this->getClient($account);
 
+			$filteredIds = [];
+			$valid = false;
 			$ids = $this->messageMapper->findAllIds($mailbox);
-			$messages = $this->messageMapper->findByMailboxAndIds($mailbox, $userId, $ids);
+
+			foreach($ids as $id) {
+				if (!$valid) {
+					if ($id === $start) {
+						$filteredIds[] = $id;
+						$valid = true;
+
+						if ($id === $end) {
+							break;
+						}
+					}
+				}
+				else {
+					$filteredIds[] = $id;
+					if ($id === $end) {
+						$valid = false;
+						break;
+					}
+				}
+			}
+
+			$messages = $this->messageMapper->findByMailboxAndIds($mailbox, $userId, $filteredIds);
 
 			foreach ($messages as $message) {
 				try {

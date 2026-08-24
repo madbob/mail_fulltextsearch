@@ -70,14 +70,14 @@ class MailProvider implements IFullTextSearchProvider {
 	 * Indexing will procede one mailbox at a time
 	 */
 	public function generateChunks(string $userId): array {
-		return $this->indexService->listMailboxes($userId);
+		return $this->indexService->generateChunks($userId);
 	}
 
 	/**
 	 * Given a mailboxes, retrieves a light version of each message
 	 */
 	public function generateIndexableDocuments(string $userId, string $chunk): array {
-		return $this->indexService->getEasyMessages($userId, (int)$chunk);
+		return $this->indexService->generateIndexableDocuments($userId, $chunk);
 	}
 
 	/**
