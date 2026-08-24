@@ -25,7 +25,7 @@ use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
 class MailProvider implements IFullTextSearchProvider {
-	public const FILES_PROVIDER_ID = 'mail';
+	public const MAIL_PROVIDER_ID = 'mail';
 	private ?IRunner $runner = null;
 	private IIndexOptions $indexOptions;
 
@@ -38,7 +38,7 @@ class MailProvider implements IFullTextSearchProvider {
 	}
 
 	public function getId(): string {
-		return self::FILES_PROVIDER_ID;
+		return self::MAIL_PROVIDER_ID;
 	}
 
 	public function getName(): string {

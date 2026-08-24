@@ -11,8 +11,10 @@ declare(strict_types=1);
 namespace OCA\Mail_FullTextSearch\AppInfo;
 
 use OCA\Mail\Events\BeforeMessageDeletedEvent;
+use OCA\Mail\Events\MessageFlaggedEvent;
 use OCA\Mail\Events\NewMessagesSynchronized;
 use OCA\Mail_FullTextSearch\Listeners\HandleMessageDeleted;
+use OCA\Mail_FullTextSearch\Listeners\HandleMessageFlagged;
 use OCA\Mail_FullTextSearch\Listeners\HandleSyncronizedMessages;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -32,6 +34,7 @@ class Application extends App implements IBootstrap {
 	public function register(IRegistrationContext $context): void {
 		$context->registerEventListener(NewMessagesSynchronized::class, HandleSyncronizedMessages::class);
 		$context->registerEventListener(BeforeMessageDeletedEvent::class, HandleMessageDeleted::class);
+		$context->registerEventListener(MessageFlaggedEvent::class, HandleMessageFlagged::class);
 	}
 
 	public function boot(IBootContext $context): void {

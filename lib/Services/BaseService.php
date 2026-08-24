@@ -61,6 +61,21 @@ class BaseService {
 		*/
 		$document->addMetaTag('maildir:' . $message->getMailboxId());
 
+		$flags = [
+			'answered' => ($message->getFlagAnswered() === true),
+			'read' => ($message->getFlagSeen() === true),
+			'starred' => ($message->getFlagFlagged() === true),
+			'important' => ($message->getFlagImportant() === true),
+			'deleted' => ($message->getFlagDeleted() === true),
+		];
+
+		foreach($flags as $flagname => $set) {
+			if ($set) {
+				$meta = sprintf('is:%s', $flagname);
+				$document->addMetaTag($meta);
+			}
+		}
+
 		return $document;
 	}
 
