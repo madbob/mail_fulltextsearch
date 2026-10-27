@@ -5,7 +5,7 @@
 	<name>Full Text Search - Mail</name>
 	<summary>Index the content of your mail</summary>
 	<description><![CDATA[Extension to the Full Text Search app to index your users' mail.]]></description>
-	<version>2.0.0</version>
+	<version>2.0.1</version>
 	<licence>AGPL-3.0-or-later</licence>
 	<author mail="info@madbob.org" homepage="">Roberto Guido</author>
 	<namespace>Mail_FullTextSearch</namespace>

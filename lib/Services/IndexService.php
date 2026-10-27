@@ -90,6 +90,13 @@ class IndexService extends BaseService {
 	public function generateIndexableDocuments(string $userId, string $chunk) {
 		$list = [];
 
+		// Reminder: users with no attached mail accounts return an empty array
+		// of chunks, which is still processed with generateIndexableDocuments.
+		// In this case, just skip
+		if (!preg_match('/^[0-9]*\-[0-9]*\-[0-9]*$/', $chunk)) {
+			return $list;
+		}
+
 		try {
 			[$mailboxId, $start, $end] = explode('-', $chunk);
 			$start = intval($start);
